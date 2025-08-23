@@ -1,0 +1,2056 @@
+
+---
+title: ""
+author: ""
+date: today
+format:
+  pdf:
+    toc: false
+    number-sections: true
+    pdf-engine: xelatex
+    fontsize: 11pt
+    keep-tex: true
+    geometry: margin=1in
+    include-in-header: preamble.tex
+mainfont: "Times New Roman"
+lang: en
+number-depth: 3
+---
+
+```{=latex}
+\begin{titlepage}
+\thispagestyle{empty}
+
+\begin{tikzpicture}[remember picture, overlay]
+  \draw[line width=1pt, color=blue!60!black]
+    ($(current page.north west) + (1cm,-1cm)$)
+    rectangle
+    ($(current page.south east) + (-1cm,1cm)$);
+\end{tikzpicture}
+
+\centering
+\vspace*{1.2cm} % reduced from 2cm
+
+{\Large \bfseries On Job Training (MAP 2811)}\\[0.4cm]
+{\Large \bfseries A Project Report on:}\\[0.3cm]
+{\LARGE \bfseries Expenditure Modelling and Transformation}\\[1cm]
+
+{\large \bfseries Submitted to:}\\[0.2cm]
+\textnormal{Department of Mathematics,\\
+Institute of Chemical Technology, Mumbai}\\[1cm]
+
+\includegraphics[width=3.8cm]{ict_logo.png}\\[1.2cm] % smaller logo
+
+{\large \bfseries Under the Guidance of:}\\[0.2cm]
+\textnormal{Prof. Anirban Chakraborti (JNU, New Delhi)}\\[1cm]
+
+{\large \bfseries Submitted by:}\\[0.2cm]
+\textnormal{Rajiba Lochan Sahoo}\\
+\textnormal{Roll Number: 24MAT207}\\
+\textnormal{Institute of Chemical Technology, Mumbai}\\[0.8cm]
+
+{\large \bfseries Date of Submission:}\\[0.2cm]
+\textnormal{16\textsuperscript{th} July 2025}
+
+\end{titlepage}
+
+
+```
+
+\setcounter{page}{1}
+\newpage
+\vspace*{3cm}
+
+\begin{center}
+{\Large \textbf{Abstract}}
+\end{center}
+
+\vspace{0.5cm}
+
+This study looks at how government funds are spent on rural infrastructure under the Pradhan Mantri Gram Sadak Yojana (PMGSY) across different states and districts in India. The dataset used has 2273 records with information such as the cost of work sanctioned, road length completed, scheme types, state GDP, and political party in power.
+
+We began with data cleaning and explored the data set using various plots to understand the structure and trends. Most numerical columns were skewed, so we applied transformations like log(x + 1) and Box-Cox to make the data more suitable for modeling. We also examined relationships between variables using correlation matrices.
+
+To predict the actual expenditure (`EXPENDITURE_OCCURED_LAKHS`), we first applied a multiple linear regression model, but it showed signs of overfitting. So, we used Lasso regression, which helps reduce complexity by selecting only the most important variables. The Lasso model was fine-tuned using cross-validation and gave a root mean square error (RMSE) of around ₹591.86 lakhs.
+
+Later, we tried Partial Least Squares (PLS), which worked better because it reduces the dimensions of the data and deals well with multicollinearity. The final PLS model had a much lower RMSE of about ₹327.72 lakhs. Based on this, we selected PLS as the final model since it was more accurate and reliable for our data.
+
+We also created visualizations to see how different states and political parties influenced the spending patterns. Overall, our analysis shows that road length, cost of work, and the state's economic and political background are the key drivers of PMGSY expenditure.
+
+
+\newpage
+\vspace*{1.5cm}
+
+\begin{center}
+{\huge \textbf{Statement by the Candidate}}
+
+\vspace{1cm}
+ 
+\includegraphics[width=4.2cm]{ict_logo.png}
+
+\vspace{1cm}
+\end{center}
+
+\vspace{0.8cm}
+\noindent
+As required by University Regulation, I, the undersigned, Mr. **Rajiba Lochan Sahoo** (Roll No. 24MAT207), student of **M.Sc. Engineering Mathematics (2024–2026)**, wish to state that the work presented in this report titled \textbf{“Expenditure Modelling and Transformation”} has been carried out by me during my On-the-Job Training (OJT).
+
+\vspace{0.3cm}
+\noindent
+The report includes data analysis, model building, and interpretation based on real project data from the PMGSY scheme. All steps from data preparation to final results were done by me.
+
+\vspace{1cm}
+
+
+
+
+
+\vfill
+
+\begin{flushleft}
+Rajiba Lochan Sahoo\\
+Roll Number: 24MAT207
+\end{flushleft}
+
+
+
+\newpage
+
+\vspace*{1.5cm}
+
+\begin{center}
+{\huge \textbf{Acknowledgements}}
+
+\end{center}
+\vspace{1cm}
+\noindent
+I would like to express my heartfelt gratitude to \href{https://sites.google.com/site/amiyaiitb/}{Prof. Amiya Ranjan Bhowmick} (Institute of Chemical Technology, Mumbai)
+for introducing me to this project and supporting me throughout the On-the-Job Training. His valuable feedback and consistent encouragement have been instrumental in shaping this work.
+
+\vspace{1em}
+
+\noindent
+I am also deeply thankful to \href{https://jnu.ac.in/content/anirban}{Prof. Anirban Chakraborti} (Jawaharlal Nehru University), under whose supervision this project was conducted. His discussions and insights helped refine the modeling and analytical aspects of the study.
+
+\vspace{1em}
+
+\noindent
+I extend my thanks to all those who contributed, directly or indirectly, to the successful completion of this project.
+
+\vfill
+
+\noindent
+Thank you,
+
+\vspace{2cm}
+
+\begin{flushright}
+Rajiba Lochan Sahoo \\
+Roll Number: 24MAT207
+\end{flushright}
+
+
+\newpage
+\begin{center}
+{\huge \textbf{Executive Summary}}
+
+
+\end{center}
+\vspace{0.5cm}
+
+\noindent
+This project explores expenditure modeling under the Pradhan Mantri Gram Sadak Yojana (PMGSY), a major rural infrastructure scheme in India. Using a dataset of over 2273 entries, we examine how financial and political factors influence actual project costs.
+\vspace{0.2cm}
+\noindent
+After cleaning and transforming the data, we applied several regression models. Lasso regression helped reduce overfitting, while Partial Least Squares (PLS) provided the most accurate predictions with the lowest RMSE.
+\vspace{0.2cm}
+\noindent
+Our findings suggest that road length, scheme type, and sanctioned cost are major drivers of expenditure. This model can aid future planning and transparent fund allocation for rural development
+
+\newpage
+\tableofcontents
+
+
+\newpage
+\listoffigures
+\newpage
+\listoftables
+\newpage
+
+
+# Chapter 1: Introduction and Objective
+
+
+India’s rural development depends heavily on strong road infrastructure. The **Pradhan Mantri Gram Sadak Yojana (PMGSY)** is a flagship scheme launched to connect rural areas through roads. Since large funds are involved in such projects, it becomes essential to examine how this money is spent and what factors affect actual project costs across Indian states.
+
+This study focuses on the pattern of fund utilization in PMGSY projects. It looks at how various factors—such as state GDP, political leadership, and scheme type—are associated with expenditure, and builds models to explore these relationships in depth.
+
+
+##  Dataset Details
+
+The dataset used for this study was sourced from the **AIKOSH portal**:
+
+- **Website**: [https://aikosh.indiaai.gov.in/home](https://aikosh.indiaai.gov.in/home)
+- **Data Timestamp**: 24 April 2023, 22:38:50  
+- **Date of Download**: 14 June 2025  
+- **Total Records**: 2,273  
+- **Columns**: 16, including:
+  - Sanctioned cost and expenditure
+  - Road and bridge work details
+  - Scheme type (PMGSY-I, II, III)
+  - GDP of the state
+  - Political party in power
+
+
+
+##  Objectives of the Study
+
+The study aims to:
+
+- Explore how PMGSY funds are utilized across different Indian states.
+- Examine the possible influence of state-level political and economic factors on project expenditure.
+- Identify patterns or anomalies in fund allocation across schemes and districts.
+- Understand which variables are most associated with higher or lower spending.
+
+
+
+## Initial Observations and Modeling Context
+
+An initial review of the dataset showed that:
+
+- Many numeric variables (like cost and road length) were **right-skewed**.
+- States such as **Uttar Pradesh, Bihar, and Madhya Pradesh** had the largest number of projects.
+- Most projects were sanctioned under **PMGSY-I and II**.
+- Political party patterns and spending varied across states.
+- Variable distributions required transformation for proper modeling.
+- A simple linear regression model **overfitted** the data.
+- Further analysis included **regularized models** and **PLS**, which gave better predictive performance.
+
+
+
+## Key Objectives
+
+Based on the nature of the data and analysis techniques, the core objectives were to:
+
+- Prepare the data by handling skewness and converting categories to dummy variables.
+- Use visual tools to explore expenditure trends by state, scheme, and political party.
+- Apply and compare models like **Lasso**, **Ridge**, **Elastic Net**, and **PLS**.
+- Select the best-performing model based on RMSE and interpret the most influential variables.
+\newpage
+
+# Chapter 2: Data Preparation and Foundation
+
+
+\noindent
+Before building any model, it is important to prepare the data properly. This chapter explains the structure of the dataset,
+how missing values were handled, what transformations were used, and how categorical variables were converted.
+
+
+
+
+
+## Variable Descriptions
+
+
+| Variable Name                        | Description                                  | Type        | Unit           |
+|-------------------------------------|----------------------------------------------|-------------|----------------|
+| `STATE_NAME`                        | Name of the state                            | Categorical | Text           |
+| `DISTRICT_NAME`                     | Name of the district                         | Categorical | Text           |
+| `PMGSY_SCHEME`                      | Scheme type (e.g., PMGSY-I, PMGSY-II)         | Categorical | Text           |
+| `NO_OF_ROAD_WORK
+SANCTIONED`       | Number of sanctioned road works              | Numeric     | Count          |
+| `NO_OF_BRIDGES SANCTIONED`         | Number of sanctioned bridge works            | Numeric     | Count          |
+| `NO_OF_ROAD_WORKS
+COMPLETED`       | Number of completed road works               | Numeric     | Count          |
+| `NO_OF_BRIDGES COMPLETED`          | Number of completed bridge works             | Numeric     | Count          |
+| `NO_OF_ROAD
+WORKS_BALANCE`         | Remaining road works                         | Numeric     | Count          |
+| `NO_OF_BRIDGES BALANCE`            | Remaining bridge works                       | Numeric     | Count          |
+| `LENGTH_OF_ROAD_WORK
+SANCTIONED_KM`| Total length of road work sanctioned         | Numeric     | Kilometers     |
+| `COST_OF_WORKS SANCTIONED
+LAKHS`   | Total sanctioned cost                        | Numeric     | Lakh rupees    |
+| `LENGTH_OF_ROAD_WORK
+COMPLETED_KM` | Completed road work length                   | Numeric     | Kilometers     |
+| `EXPENDITURE_OCCURED
+LAKHS`        | Actual expenditure incurred                  | Numeric     | Lakh rupees    |
+| `LENGTH_OF_ROAD_WORK
+BALANCE_KM`   | Remaining road work length                   | Numeric     | Kilometers     |
+| `STATE_GDP_CRORE`                  | GDP of the state                             | Numeric     | Crore rupees   |
+| `POLITICAL_PARTY`                  | Ruling political party in the state          | Categorical | Text           |
+
+
+
+##  Data Cleaning Summary
+
+- There were **no missing values** in the original dataset.
+
+- After log/Box-Cox transformation (discussed later), a few NA values were introduced and handled using `complete.cases()`.
+
+- A few negative values in `EXPENDITURE_OCCURED_LAKHS` were observed. These might be manual errors or adjustment entries. They were retained but flagged for interpretation.
+
+- Categorical columns were kept as-is at this stage.
+
+
+
+## Box-Cox Transformation
+
+Many variables in the data set such as `EXPENDITURE_OCCURED_LAKHS`, `COST_OF_WORKS_SANCTIONED_LAKHS`, and `LENGTH_OF_ROAD_WORK_COMPLETED_KM` were found to be highly skewed. Skewed variables can lead to poor model performance, especially in linear regression-based methods.
+
+To address this, we used the **Box-Cox transformation**, a power transformation technique that helps in making the data more normally distributed.
+
+
+###  Mathematical Formula
+
+The Box-Cox transformation is defined as:
+
+$$
+x^{(\lambda)} = 
+\begin{cases}
+\frac{x^\lambda - 1}{\lambda}, & \text{if } \lambda \neq 0 \\\\
+\ln(x), & \text{if } \lambda = 0
+\end{cases}
+$$
+
+Where:
+
+- $x$ is the original variable (must be positive)  
+- $\lambda$ is the transformation parameter estimated from the data
+
+
+
+### How We Applied It
+
+- Applied to skewed variables after adding 1: $\log(x + 1)$ when needed  
+- Used the `boxcox()` function from the `MASS` package in R  
+- Optimal $\lambda$ was selected using cross-validation
+
+
+##  Dummy Encoding of Categorical Variables
+
+Machine learning models and linear regression algorithms typically require all input features to be in numeric form. Since variables like `STATE_NAME` and `POLITICAL_PARTY` are categorical, we need to convert them into numeric format.
+
+This was done using **dummy encoding**, where each category is transformed into a separate binary column (0 or 1).
+
+
+![Comparison of One-Hot Encoding and Dummy Encoding for categorical variables.](one_hot.jpg){#fig-one-hot fig-align="center" width="80%"}
+
+###  Method Used
+
+We used the `model.matrix()` function in R to automatically generate dummy variables for each category.
+
+```{r , warning=FALSE,message=FALSE}
+data = data.frame(Gender = c("male","female","male","female"),
+Age  = c(40,30,65,20))
+dummy_var = model.matrix(~Gender  + Age ,data =data)[,-1]
+
+
+```
+##  Train-Test Split
+
+To evaluate the performance of a predictive model fairly, it’s essential to split the dataset into two parts:
+
+- **Training Set**: Used to build and fit the model  
+- **Testing Set**: Used to check how well the model generalizes to unseen data
+
+### About initial_split() :
+
+- We used the **initial_split()** function from the **rsample package** to divide the dataset into **training** and **testing** sets before applying model-based techniques like **LASSO** and **pls**
+- This function ensures that a random 70% of the data is used for training and the remaining 20% for validation(testing).
+
+- It helps us avoid **overfitting** and evaluate the model's **generalization performance** on unseen data.
+
+
+![Dataset partitioning into training and testing sets.](train_test.jpg){#fig-train-test fig-align="center" width="50%"}
+ 
+
+
+##  Lasso Regression (Mathematical Explanation)
+
+**Lasso** stands for **Least Absolute Shrinkage and Selection Operator**. It is a type of linear regression that not only fits the model but also **performs variable selection** by shrinking the coefficients of less important variables to zero.
+
+This helps reduce overfitting and simplifies the model by keeping only the most relevant predictors.
+
+
+
+### Mathematical Formula
+
+The Lasso model minimizes the following cost function:
+
+$$
+\underset{\beta}{\text{minimize}} \left\{ \sum_{i=1}^{n} \left( y_i - \beta_0 - \sum_{j=1}^{p} \beta_j x_{ij} \right)^2 + \lambda \sum_{j=1}^{p} |\beta_j| \right\}
+$$
+
+Where:
+
+- $y_i$: Actual value for observation $i$  
+- $x_{ij}$: Value of predictor $j$ for observation $i$  
+- $\beta_j$: Coefficient for predictor $j$  
+- $\lambda$: Tuning parameter controlling the penalty  
+- $\sum |\beta_j|$: **L1 norm** penalty (sum of absolute values of coefficients)
+
+
+
+###  What Lasso Does
+
+- When $\lambda = 0$, the model becomes ordinary least squares regression.
+- As $\lambda$ increases, the penalty term becomes stronger.
+- Coefficients for **less important variables shrink to 0**, effectively removing them.
+- Lasso is useful when you have **many predictors** but want to keep the model interpretable.
+
+
+
+###  In This Project
+
+- Lasso helped reduce the number of features and avoid multicollinearity.
+
+- Cross-validation was used to select the best $\lambda$ using `cv.glmnet()`.
+
+
+
+## Partial Least Squares (PLS) Regression
+
+Partial Least Squares (PLS) Regression is a technique used when we have **many predictors** that are **highly correlated**, and we want to build a model without overfitting. Instead of removing variables (like Lasso), PLS creates new variables, called **components**, which are combinations of the original predictors. These components are selected to best explain the response variable.
+
+
+
+### Why Use PLS?
+
+PLS is especially helpful when:
+
+- There are **too many predictors**, or predictors are **highly correlated**
+- The number of predictors is **greater than the number of samples**
+- We want to do **dimension reduction and regression** together
+- We want a model that is **less likely to overfit**
+
+
+
+### Key Idea Behind PLS
+
+The main goal of PLS is to **create new features (components)** by combining original predictors in a smart way, so that these new features:
+
+- Capture the most important information in the data
+- Have the highest possible correlation with the target (response variable)
+- Can be used for accurate prediction
+
+
+## Mathematical Concepts in PLS
+
+Let’s define the key terms:
+
+- $X$: The matrix of predictors (like road length, cost, GDP, etc.)
+- $Y$: The response variable (like actual expenditure)
+- $W$: Weights used to create components
+- $T = XW$: The new components (called score matrix)
+- $P$: Loadings that explain how much each variable contributes to components
+- $Q$: Loadings for response variable
+
+
+### How PLS Builds Components
+
+PLS works in steps:
+
+####  Maximize Covariance
+
+PLS looks for a weight vector $( w )$ that maximizes the **relationship between the predictor and the response**:
+
+$$
+\max_w \ \text{Cov}^2(Xw, Y) \quad \text{subject to} \quad \|w\| = 1
+$$
+
+#### Create the First Component
+
+Use $( w )$ to calculate the first component:
+
+$$
+t_1 = Xw_1
+$$
+
+This new variable (component) is used to predict $( Y )$.
+
+####  Update the Model
+
+PLS removes (deflates) the part of the data explained by the first component:
+
+$$
+X_1 = X - t_1 p_1^\top, \quad Y_1 = Y - t_1 q_1
+$$
+
+Then it repeats the process to find the next component $ (t_2 )$, and so on.
+
+##### Final Model
+
+Once we have $A$ components, the final PLS model looks like:
+
+$$
+\hat{Y} = X W (P^\top W)^{-1} Q
+$$
+
+This equation gives the predicted values of $Y$ based on the reduced features.
+
+
+
+### PLS vs PCA (Comparison)
+
+| Feature     | PCA (Principal Component Analysis) | PLS (Partial Least Squares)         |
+|-------------|-------------------------------------|--------------------------------------|
+| Uses only   | Predictors $X$                      | Both predictors $X$ and response $Y$ |
+| Goal        | Maximize variance in $X$            | Maximize correlation with $Y$        |
+| Components  | Unsupervised                        | Supervised                           |
+| Best for    | Data compression                    | Prediction and compression           |
+
+
+![Visual Partial Least Squares Regression.](pca_pls.jpg){#fig-pca-pls fig-align="center" width="95%"}
+
+
+## Using PLS in This Project
+
+In this report:
+
+- We used the **`pls`** package in **R**
+- We selected the number of components using **cross-validation**
+- PLS performed better than Lasso and gave the **lowest RMSE**
+
+This shows that PLS is a strong method when variables are related to each other, and we still want accurate prediction.
+
+
+
+## Variable Importance in Projection (VIP)
+
+PLS keeps all variables, but some variables are more important than others. To find this, we use the **VIP score** (Variable Importance in Projection).
+
+### What is a VIP Score?
+
+The VIP score shows how much each predictor contributes to the PLS model.
+
+- **VIP > 1** → important variable  
+- **VIP < 1** → less important
+
+### VIP Formula:
+
+$$
+\text{VIP}_j = \sqrt{
+  p \cdot \frac{
+    \sum_{k=1}^{A} SS_k \cdot w_{jk}^2
+  }{
+    \sum_{k=1}^{A} SS_k
+  }
+}
+$$
+
+Where:
+
+- $p$: Number of predictors  
+- $A$: Number of components  
+- $SS_k$: Variance in $Y$ explained by component $k$  
+- $w_{jk}$: Weight of variable $j$ in component $k$
+
+
+
+### In This Project
+
+Based on VIP scores, these variables were the most important:
+
+- `COST_OF_WORKS_SANCTIONED_LAKHS`  
+- `LENGTH_OF_ROAD_WORK_COMPLETED_KM`  
+- `STATE_GDP_CRORE`  
+- State and Scheme dummy variables
+
+\newpage
+
+# Chapter 3: Loading the Dataset and EDA
+
+```{r setup1 ,warning=FALSE,message=FALSE}
+# Load required libraries
+library(caret)
+library(dplyr)
+library(rsample)
+library(vip)
+library(glmnet)
+library(ggplot2)
+library(recipes)
+library(readr)
+
+# Read the CSV file
+df = read.csv(r"(C:\Users\rajib\Downloads\ROAD WORK PMGSY.csv)")
+
+# Create GDP as named vector
+state_gdp  = c(
+  "Andaman And Nicobar" = 8000,
+  "Andhra Pradesh" = 1350000,
+  "Arunachal Pradesh" = 35000,
+  "Assam" = 450000,
+  "Bihar" = 800000,
+  "Chhattisgarh" = 430000,
+  "Goa" = 85000,
+  "Gujarat" = 2160000,
+  "Haryana" = 1050000,
+  "Himachal Pradesh" = 200000,
+  "Jharkhand" = 450000,
+  "Karnataka" = 2250000,
+  "Kerala" = 1090000,
+  "Madhya Pradesh" = 1250000,
+  "Maharashtra" = 3500000,
+  "Manipur" = 35000,
+  "Meghalaya" = 40000,
+  "Mizoram" = 25000,
+  "Nagaland" = 30000,
+  "Odisha" = 800000,
+  "Punjab" = 750000,
+  "Rajasthan" = 1300000,
+  "Sikkim" = 30000,
+  "Tamil Nadu" = 2400000,
+  "Telangana" = 1300000,
+  "Tripura" = 50000,
+  "Uttar Pradesh" = 2400000,
+  "Uttarakhand" = 400000,
+  "West Bengal" = 1650000,
+  "Chandigarh" = 50000,
+  "Delhi" = 1100000,
+  "Jammu And Kashmir" = 170000,
+  "Ladakh" = 3000,
+  "Puducherry" = 40000
+)
+
+# Create political party as named vector
+political_party =  c(
+  "Andhra Pradesh" = "YSR Congress",
+  "Arunachal Pradesh" = "BJP",
+  "Assam" = "BJP",
+  "Bihar" = "JD(U)-RJD Alliance",
+  "Chhattisgarh" = "Congress",
+  "Goa" = "BJP",
+  "Gujarat" = "BJP",
+  "Haryana" = "BJP",
+  "Himachal Pradesh" = "Congress",
+  "Jharkhand" = "JMM-Congress Alliance",
+  "Karnataka" = "Congress",
+  "Kerala" = "LDF (CPM)",
+  "Madhya Pradesh" = "BJP",
+  "Maharashtra" = "BJP-Shiv Sena",
+  "Manipur" = "BJP",
+  "Meghalaya" = "NPP-BJP Alliance",
+  "Mizoram" = "ZPM",
+  "Nagaland" = "NDPP-BJP Alliance",
+  "Odisha" = "BJD",
+  "Punjab" = "AAP",
+  "Rajasthan" = "Congress",
+  "Sikkim" = "Sikkim Krantikari Morcha",
+  "Tamil Nadu" = "DMK",
+  "Telangana" = "Congress",
+  "Tripura" = "BJP",
+  "Uttar Pradesh" = "BJP",
+  "Uttarakhand" = "BJP",
+  "West Bengal" = "TMC",
+  "Andaman And Nicobar" = "Central Admin",
+  "Chandigarh" = "BJP",
+  "Delhi" = "AAP",
+  "Jammu And Kashmir" = "Central Admin",
+  "Ladakh" = "Central Admin",
+  "Puducherry" = "BJP"
+)
+
+# Add GDP and Political Party columns to the data frame
+df = df %>%
+  mutate(
+    STATE_GDP_CRORE = state_gdp[STATE_NAME],
+    POLITICAL_PARTY = political_party[STATE_NAME]
+  )
+
+# Save the updated data
+df1 = write_csv(df,(r"(C:\Users\rajib\Downloads\d4361151-6d41-43c7-98cd-9a6cd90b5ca4 (1).csv)")) 
+
+names(df1)
+dim(df1)
+head(df1)
+class(df1)
+#summary(df1)
+```
+
+
+## Read and Structure Data
+
+
+**The function class is important to understand different data types. In data analysis, this function is often useful to check for the correct input type to specific functions in R.**
+```{r ,warning=FALSE ,message=FALSE}
+# Check the class 
+sapply(df1[c(
+  "STATE_NAME",
+  "DISTRICT_NAME",
+  "PMGSY_SCHEME",
+  "NO_OF_ROAD_WORK_SANCTIONED",
+  "NO_OF_BRIDGES_SANCTIONED",
+  "NO_OF_ROAD_WORKS_COMPLETED",
+  "NO_OF_BRIDGES_COMPLETED",
+  "NO_OF_ROAD_WORKS_BALANCE",
+  "NO_OF_BRIDGES_BALANCE",
+  "LENGTH_OF_ROAD_WORK_SANCTIONED_KM",
+  "COST_OF_WORKS_SANCTIONED_LAKHS",
+  "LENGTH_OF_ROAD_WORK_COMPLETED_KM",
+  "EXPENDITURE_OCCURED_LAKHS",
+  "LENGTH_OF_ROAD_WORK_BALANCE_KM",
+  "STATE_GDP_CRORE",
+  "POLITICAL_PARTY"
+)], class)
+
+```
+
+## Create boxplot and histogram of numeric data
+
+```{r , fig.width=9, fig.height=8, warning=FALSE, message=FALSE}
+# margins:bottom, left, top, right
+par(mfrow = c(3,2), mar = c(4.5, 4.5, 2.5, 1))  
+
+boxplot(df1$LENGTH_OF_ROAD_WORK_SANCTIONED_KM,
+        col = "green",
+        main = "Road Work Sanctioned (KM)", 
+        ylab = "Kilometers")
+
+boxplot(df1$COST_OF_WORKS_SANCTIONED_LAKHS,
+        col = "magenta", 
+        main = "Cost of Works Sanctioned (Lakhs)", 
+        ylab = "Lakhs")
+
+boxplot(df1$LENGTH_OF_ROAD_WORK_COMPLETED_KM,
+        col = "red", 
+        main = "Completed Road Length (KM)",
+        ylab = "Kilometers")
+
+boxplot(df1$EXPENDITURE_OCCURED_LAKHS,
+        col = "blue",
+        main = "Expenditure Occurred (Lakhs)", 
+        ylab = "Lakhs")
+
+boxplot(df1$LENGTH_OF_ROAD_WORK_BALANCE_KM,
+        col = "grey",
+        main = "Balance Road Length (KM)",
+        ylab = "Kilometers")
+
+boxplot(df1$STATE_GDP_CRORE,
+        col = "violet",
+        main = "State GDP (Crores)", 
+        ylab = "Crores")
+```
+
+\large In the above boxplots, many variables are positively skewed, meaning most values are low but a few are very high. \large Also, most variables have many outliers. \large Only State GDP looks more balanced, ranging from ₹3,000 crores to ₹35,00,000 crores, and it doesn't have many outliers.
+
+**plot histogram to observed the distribution**
+
+```{r , fig.width=10, fig.height=8, warning=FALSE, message=FALSE}
+par(mfrow = c(3, 2), mar = c(4.5, 4.5, 2.5, 1))  
+
+hist(df1$LENGTH_OF_ROAD_WORK_SANCTIONED_KM,
+     col = "green", 
+     main = "Road Work Sanctioned (KM)",
+     ylab = "Frequency",
+     xlab = "Kilometers")
+
+hist(df1$COST_OF_WORKS_SANCTIONED_LAKHS,
+     col = "magenta", 
+     main = "Cost of Works Sanctioned (Lakhs)", 
+     ylab = "Frequency", 
+     xlab = "Lakhs")
+
+hist(df1$LENGTH_OF_ROAD_WORK_COMPLETED_KM,
+     col = "red", 
+     main = "Completed Road Length (KM)", 
+     ylab = "Frequency", 
+     xlab = "Kilometers")
+
+hist(df1$EXPENDITURE_OCCURED_LAKHS,
+     col = "blue", 
+     main = "Expenditure Occurred (Lakhs)",
+     ylab = "Frequency",
+     xlab = "Lakhs")
+
+hist(df1$LENGTH_OF_ROAD_WORK_BALANCE_KM,
+     col = "grey",
+     main = "Balance Road Length (KM)",
+     ylab = "Frequency", xlab = "Kilometers")
+
+hist(df1$STATE_GDP_CRORE,
+     col = "violet", 
+     main = "State GDP (Crores)",
+     ylab = "Frequency", 
+     xlab = "Crores")
+
+```
+
+\large The above histograms show that none of the variables follow a normal distribution.Most distributions are right-skewed
+
+## Vioplots for numerical variables
+
+```{r setup2, fig.width=10, fig.height=8, warning=FALSE, message=FALSE}
+library(vioplot)
+par(mfrow = c(3, 2), mar = c(4.5, 4.5, 2.5, 1))
+
+vioplot(df1$LENGTH_OF_ROAD_WORK_SANCTIONED_KM,
+        col = "green",
+        main = "Road Work Sanctioned (KM)", 
+        ylab = "Kilometers")
+
+vioplot(df1$COST_OF_WORKS_SANCTIONED_LAKHS,
+        col = "magenta",
+        main = "Cost of Works Sanctioned (Lakhs)", 
+        ylab = "Lakhs")
+
+vioplot(df1$LENGTH_OF_ROAD_WORK_COMPLETED_KM,
+        col = "red",
+        main = "Completed Road Length (KM)",
+        ylab = "Kilometers")
+
+vioplot(df1$EXPENDITURE_OCCURED_LAKHS,
+        col = "blue", 
+        main = "Expenditure Occurred (Lakhs)",
+        ylab = "Lakhs")
+
+vioplot(df1$LENGTH_OF_ROAD_WORK_BALANCE_KM,
+        col = "grey", 
+        main = "Balance Road Length (KM)",
+        ylab = "Kilometers")
+
+vioplot(df1$STATE_GDP_CRORE,
+        col = "violet", 
+        main = "State GDP (Crores)", 
+        ylab = "Crores")
+
+```
+
+\large Except for the State GDP, all other variables in the violin plots are positively skewed, meaning most of the data values are small with a few very large . The State GDP, however, is more symmetrically distributed and not positively skewed.
+
+## Normality Check:
+
+\large Use the Shapiro-Wilk test to check whether each continuous variable is normally distributed. Interpret the result: variables with a p-value less than 0.05 are not normally distributed.
+
+```{r ,warning=FALSE, message=FALSE}
+shapiro.test(df1$LENGTH_OF_ROAD_WORK_SANCTIONED_KM)
+shapiro.test(df1$COST_OF_WORKS_SANCTIONED_LAKHS)
+shapiro.test(df1$LENGTH_OF_ROAD_WORK_COMPLETED_KM)
+shapiro.test(df1$EXPENDITURE_OCCURED_LAKHS)
+shapiro.test(df1$LENGTH_OF_ROAD_WORK_BALANCE_KM)
+shapiro.test(df1$STATE_GDP_CRORE)
+
+```
+
+## Scheme-wise and Party-wise Counts categorical varibles
+
+```{r setup3, fig.width=10, fig.height=9, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(gridExtra)
+
+# Plot 1: Records per State
+p1 = ggplot(df1, aes(x = STATE_NAME)) +
+  geom_bar(fill = "red", color = "black") +
+  theme(axis.text.x = element_text(angle = 60, 
+                                   hjust = 1,
+                                   size = 6),
+        plot.title = element_text(size = 12,
+                                  face = "bold")) +
+  labs(title = "Records per State",
+       x = "State", 
+       y = "Projects")
+
+# Plot 2: Records per state into political party(bivariate plot)
+p2 = df1 %>%
+  group_by(STATE_NAME, POLITICAL_PARTY) %>%
+  summarise(total_projects = n()) %>%
+  ggplot(aes(x = reorder(STATE_NAME,
+                         -total_projects),
+             y = total_projects,
+             fill = POLITICAL_PARTY)) +
+  geom_col(position = "dodge") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "State and Political Party",
+       x = "State", y = "Project Count")
+
+
+# Plot 3: Scheme Distribution
+p3 = ggplot(df1, aes(x = PMGSY_SCHEME)) +
+  geom_bar(fill = "blue", color = "black") +
+  theme(axis.text.x = element_text(size = 8),
+        plot.title = element_text(size = 12, 
+                                  face = "bold")) +
+  labs(title = "Scheme Distribution",
+       x = "Scheme",
+       y = "Projects")
+
+# Plot 4: Political Party Distribution
+p4 = ggplot(df1, aes(x = POLITICAL_PARTY)) +
+  geom_bar(fill = "magenta", color = "black") +
+  theme(axis.text.x = element_text(angle = 45,
+                                   hjust = 1, 
+                                   size = 6),
+        plot.title = element_text(size = 12,
+                                  face = "bold")) +
+  labs(title = "Political Party Distribution",
+       x = "Party", 
+       y = "Projects")
+
+
+grid.arrange(p1, p2, p3, p4, ncol = 2)
+
+```
+
+**Number of Records per State**:
+
+Uttar Pradesh has the highest number of records (190+), followed by Madhya Pradesh, Bihar, Rajasthan, and Tamil Nadu, which also show a significantly large number of road project entries.
+
+
+
+**Some Research Questions**:
+
+
+- Do these high-record states—**Uttar Pradesh, Madhya Pradesh, Bihar, Rajasthan, and Tamil Nadu**—receive more road projects due to their **larger populations or greater infrastructure needs**?
+- Is there a **systematic relationship** between the **ruling political party** in a state and the **number of sanctioned road projects**?
+- Do economically **stronger states** (based on **State GDP**) receive **more projects**, or is there **equitable distribution** irrespective of economic size?
+
+**Record per State and Political Party**:
+
+I created a bivariate bar plot showing the number of projects in each state, colored by the ruling political party. This allows us to visually explore how political affiliation may relate to project distribution. The X-axis shows states, while the Y-axis shows project counts. Bars are grouped by party using geom_col(position = "dodge"), making comparisons clearer.
+
+
+
+**Scheme Distribution**:
+
+Most road project records belong to **PMGSY schemes (PMGSY-I, PMGSY-II, PMGSY-III)**, each with over 700 entries. The **PM-JANMAN and RCPLWEA** schemes have fewer than 200 entries each.
+
+**Political party Distribution**:
+
+Most road projects come from states governed by **BJP and Congress**. A smaller number of projects are associated with other political parties.
+
+**Full Forms of Political Parties** 
+```{r party_full-names,fig.width=7,fig.height=7, warning=FALSE, message=FALSE}
+library(tibble)
+library(knitr)
+library(kableExtra)
+
+# Create the party abbreviation table
+party_abbr = tribble(
+  ~Abbreviation, ~Full_Form,
+  "AAP", "Aam Aadmi Party",
+  "BJD", "Biju Janata Dal",
+  "BJP", "Bharatiya Janata Party",
+  "BJP–Shiv Sena", "BJP–Shiv Sena Alliance",
+  "Central Admin", "Central Administration",
+  "Congress", "Indian National Congress",
+  "DMK", "Dravida Munnetra Kazhagam",
+  "JD(U)–RJD Alliance", "Janata Dal (United)–
+  Rashtriya Janata Dal Alliance",
+  "JMM–Congress Alliance", "Jharkhand Mukti Morcha –
+  Indian National Congress Alliance",
+  "LDF (CPM)", "Left Democratic Front (Communist Party of India
+  - Marxist)",
+  "NDPP–BJP Alliance", "Nationalist Democratic Progressive 
+  Party– BJP Alliance",
+  "NPP–BJP Alliance", "National People's Party – BJP Alliance",
+  "Sikkim Krantikari Morcha", "Sikkim Krantikari Morcha",
+  "TMC", "All India Trinamool Congress",
+  "YSR Congress", "Yuvajana Sramika Rythu Congress Party",
+  "ZPM", "Zoram People's Movement",
+  "NA", "Not Assigned / Unknown"
+)
+
+# Render table with caption 
+kable(party_abbr,
+      caption = "Abbreviations and Full Forms of
+      Political Parties Used in Analysis", 
+      booktabs = TRUE) %>%
+  kable_styling(
+    full_width = FALSE,
+    position = "center",
+    latex_options = "hold_position"
+    
+  )
+```
+
+
+## India Map: GDP, Party, Expenditure
+
+```{r ,fig.cap="State-wise Analysis of PMGSY Expenditure and Political Party Representation on the Indian Map", fig.width=10, fig.height=10, warning=FALSE, message=FALSE, cache=TRUE, dev="cairo_pdf"}
+
+# Load libraries
+library(sf)
+library(ggplot2)
+library(dplyr)
+library(rgeoboundaries)
+
+# Load India map from GeoBoundaries and simplify
+india_map = geoboundaries("India", adm_lvl = "adm1")
+india_map = st_simplify(india_map, dTolerance = 500)
+india_map$STATE_NAME = toupper(india_map$shapeName)
+
+# Clean df1 STATE_NAME to match map
+df1$STATE_NAME = toupper(df1$STATE_NAME)
+
+df1$STATE_NAME = recode(df1$STATE_NAME,
+  "ANDAMAN AND NICOBAR" = "ANDAMAN AND NICOBAR ISLANDS",
+  "ARUNACHAL PRADESH"   = "ARUNĀCHAL PRADESH",
+  "BIHAR"               = "BIHĀR",
+  "CHHATTISGARH"        = "CHHATTĪSGARH",
+  "GUJARAT"             = "GUJARĀT",
+  "HARYANA"             = "HARYĀNA",
+  "HIMACHAL PRADESH"    = "HIMĀCHAL PRADESH",
+  "JAMMU AND KASHMIR"   = "JAMMU AND KASHMĪR",
+  "JHARKHAND"           = "JHĀRKHAND",
+  "KARNATAKA"           = "KARNĀTAKA",
+  "MAHARASHTRA"         = "MAHĀRĀSHTRA",
+  "MEGHALAYA"           = "MEGHĀLAYA",
+  "NAGALAND"            = "NĀGĀLAND",
+  "ODISHA"              = "ODISHA",
+  "RAJASTHAN"           = "RĀJASTHĀN",
+  "TAMIL NADU"          = "TAMIL NĀDU",
+  "TELANGANA"           = "TELANGĀNA",
+  "UTTARAKHAND"         = "UTTARĀKHAND",
+  "LADAKH"              = "LADĀKH",
+  "PUDUCHERRY"          = "PUDUCHERRY"
+)
+
+# Define Unicode GDP and party vectors
+state_gdp = c(
+  "ANDAMAN AND NICOBAR ISLANDS" = 8000,
+  "ANDHRA PRADESH" = 1350000,
+  "ARUNĀCHAL PRADESH" = 35000,
+  "ASSAM" = 450000,
+  "BIHĀR" = 800000,
+  "CHHATTĪSGARH" = 430000,
+  "DELHI" = 1100000,
+  "GOA" = 85000,
+  "GUJARĀT" = 2160000,
+  "HARYĀNA" = 1050000,
+  "HIMĀCHAL PRADESH" = 200000,
+  "JAMMU AND KASHMĪR" = 170000,
+  "JHĀRKHAND" = 450000,
+  "KARNĀTAKA" = 2250000,
+  "KERALA" = 1090000,
+  "LADĀKH" = 3000,
+  "MADHYA PRADESH" = 1250000,
+  "MAHĀRĀSHTRA" = 3500000,
+  "MANIPUR" = 35000,
+  "MEGHĀLAYA" = 40000,
+  "MIZORAM" = 25000,
+  "NĀGĀLAND" = 30000,
+  "ODISHA" = 800000,
+  "PUNJAB" = 750000,
+  "RĀJASTHĀN" = 1300000,
+  "SIKKIM" = 30000,
+  "TAMIL NĀDU" = 2400000,
+  "TELANGĀNA" = 1300000,
+  "TRIPURA" = 50000,
+  "UTTAR PRADESH" = 2400000,
+  "UTTARĀKHAND" = 400000,
+  "WEST BENGAL" = 1650000,
+  "PUDUCHERRY" = 40000
+)
+
+political_party = c(
+  "ANDAMAN AND NICOBAR ISLANDS" = "Central Admin",
+  "ANDHRA PRADESH" = "YSR Congress",
+  "ARUNĀCHAL PRADESH" = "BJP",
+  "ASSAM" = "BJP",
+  "BIHĀR" = "JD(U)-RJD Alliance",
+  "CHHATTĪSGARH" = "Congress",
+  "DELHI" = "AAP",
+  "GOA" = "BJP",
+  "GUJARĀT" = "BJP",
+  "HARYĀNA" = "BJP",
+  "HIMĀCHAL PRADESH" = "Congress",
+  "JAMMU AND KASHMĪR" = "Central Admin",
+  "JHĀRKHAND" = "JMM-Congress Alliance",
+  "KARNĀTAKA" = "Congress",
+  "KERALA" = "LDF (CPM)",
+  "LADĀKH" = "Central Admin",
+  "MADHYA PRADESH" = "BJP",
+  "MAHĀRĀSHTRA" = "BJP-Shiv Sena",
+  "MANIPUR" = "BJP",
+  "MEGHĀLAYA" = "NPP-BJP Alliance",
+  "MIZORAM" = "ZPM",
+  "NĀGĀLAND" = "NDPP-BJP Alliance",
+  "ODISHA" = "BJD",
+  "PUNJAB" = "AAP",
+  "RĀJASTHĀN" = "Congress",
+  "SIKKIM" = "Sikkim Krantikari Morcha",
+  "TAMIL NĀDU" = "DMK",
+  "TELANGĀNA" = "Congress",
+  "TRIPURA" = "BJP",
+  "UTTAR PRADESH" = "BJP",
+  "UTTARĀKHAND" = "BJP",
+  "WEST BENGAL" = "TMC",
+  "PUDUCHERRY" = "BJP"
+)
+
+# Add GDP and Party columns
+df1$STATE_GDP_CRORE = state_gdp[df1$STATE_NAME]
+df1$POLITICAL_PARTY = political_party[df1$STATE_NAME]
+
+# Summarize expenditure by state
+df_summary = df1 %>%
+  group_by(STATE_NAME, POLITICAL_PARTY) %>%
+  summarise(
+    Total_Expenditure = sum(EXPENDITURE_OCCURED_LAKHS, na.rm = TRUE),
+    STATE_GDP_CRORE = first(STATE_GDP_CRORE),
+    .groups = "drop"
+  )
+
+# Merge with map
+map_data = india_map %>%
+  left_join(df_summary, by = "STATE_NAME")
+
+# Compute centroids
+centroids = st_centroid(map_data)
+centroids_clean = centroids %>%
+  filter(!is.na(Total_Expenditure))
+centroids_clean$GDP_LABEL = format(centroids_clean$STATE_GDP_CRORE, 
+                                   big.mark = ",",
+                                   scientific = FALSE)
+
+# Final plot
+ggplot() +
+  geom_sf(data = map_data, aes(fill = POLITICAL_PARTY), color = "white") +
+  geom_sf(data = centroids_clean, aes(size = Total_Expenditure),
+          shape = 21, fill = "black", color = "white", alpha = 0.5) +
+  geom_sf_text(data = centroids_clean, aes(label = GDP_LABEL),
+               size = 2.5, color = "white", fontface = "bold") +
+  geom_sf_text(data = centroids_clean, aes(label = STATE_NAME),
+               size = 2.2, color = "black",
+               nudge_y = 1.0, check_overlap = TRUE) +
+  scale_size_continuous(range = c(1, 10), name = "Expenditure (Lakhs)") +
+  labs(
+    title = "State-wise PMGSY Expenditure & Political Party",
+    subtitle = "GeoBoundaries Map | Bubble = Expenditure | 
+    Text = GDP (Cr Rupees)",
+    fill = "Political Party"
+  ) +
+  guides(size = guide_legend(override.aes = list(fill = "black"))) +
+  theme_minimal()
+
+
+```
+
+
+
+## Correlation Matrix (Relation between numerical variable)
+```{r setup6, fig.cap="Correlation matrix and scatterplot matrix", fig.width=8, fig.height=7, warning=FALSE, message=FALSE}
+library(dplyr)
+library(corrplot)
+
+df_numeric = df1 %>% select(where(is.numeric))
+
+# Compute correlation matrix
+cor_matrix = cor(df_numeric, use = "complete.obs")
+
+# Plot correlation matrix
+corrplot(
+  cor_matrix,
+  method = "color",
+  type = "upper",
+  tl.col = "black",
+  tl.cex = 0.8,
+  title = "Correlation Matrix of Numeric Variables",
+  mar = c(0, 0, 1, 0)
+)
+
+# Scatterplot matrix
+pairs(
+  df_numeric,
+  main = "Scatterplot Matrix of Numeric Variables",
+  pch = 21,
+  bg = "lightblue"
+)
+
+```
+
+**Correlation Analysis**
+```{r, warning=FALSE, message=FALSE}
+cor(df1$NO_OF_ROAD_WORK_SANCTIONED, 
+    df1$EXPENDITURE_OCCURED_LAKHS)
+cor(df1$NO_OF_BRIDGES_SANCTIONED,
+    df1$EXPENDITURE_OCCURED_LAKHS)
+cor(df1$NO_OF_ROAD_WORKS_COMPLETED,
+    df1$EXPENDITURE_OCCURED_LAKHS)
+cor(df1$NO_OF_BRIDGES_COMPLETED,
+    df1$EXPENDITURE_OCCURED_LAKHS)
+cor(df1$LENGTH_OF_ROAD_WORK_COMPLETED_KM,
+    df1$EXPENDITURE_OCCURED_LAKHS)
+cor(df1$LENGTH_OF_ROAD_WORK_SANCTIONED_KM,
+    df1$EXPENDITURE_OCCURED_LAKHS)
+```
+All the predictor variables demonstrate a strong or moderate **positive correlation** with the response variable  **EXPENDITURE_OCCURED LAKHS**. Notably, road length (both sanctioned and completed) shows very high correlation ($\rho > 0.89$)
+, indicating that longer roads are directly associated with higher expenditures. This validates the choice of expenditure as the response variable in a predictive regression model.
+
+
+
+## Relation between Numerical variable and Categorical variable 
+```{r ,fig.cap="Boxplot showing expenditure distribution by political party, with red dots indicating the mean expenditure for each party." ,fig.width=9 ,fig.height=8}
+
+ggplot(df1, aes(x = POLITICAL_PARTY,
+                y = EXPENDITURE_OCCURED_LAKHS)) +
+  geom_boxplot(fill = "skyblue", color = "red") +
+  stat_summary(fun = mean, geom = "point", 
+               shape = 20,
+               size = 2.5,
+               color = "darkred") +
+  theme_minimal() +
+  labs(
+    title = "Expenditure by Political Party",
+    x = "Political party",
+    y = "Expenditure (Lakhs)"
+  ) +
+  theme(axis.text.x = element_text(angle = 45,
+                                   hjust = 1))
+
+
+
+```
+- **BJD, BJP, TMC, DMK,** and the **JD(U)-RJD Alliance** exhibit higher median expenditures and wider interquartile ranges, reflecting both moderate and large-scale projects.
+
+- The **BJP** shows many high-value outliers, indicating several projects with significantly high costs.
+
+- **JD(U)-RJD Alliance** has a high median and large spread, suggesting a diverse project range.
+
+- **DMK** demonstrates mid-to-high range spending with outliers.
+
+- In contrast` LDF (CPM)`,` ZPM`, and `NDPP-BJP` Alliance have lower and more consistent spending, shown by narrower boxes and lower medians.
+
+### Relation between Numerical variable and Categorical variable 
+```{r ,fig.cap="Boxplot showing expenditure distribution by PMGSY_Scheme, with red dots indicating the mean expenditure for each Scheme." ,fig.width=8 ,fig.height=7}
+ggplot(df1, aes(x = PMGSY_SCHEME,
+                y = EXPENDITURE_OCCURED_LAKHS)) +
+  geom_boxplot(fill = "skyblue", 
+               color = "red") +
+  stat_summary(fun = mean, geom = "point",
+               shape = 20, 
+               size = 2.5, 
+               color = "darkred") +
+  theme_minimal() +
+  labs(
+    title = "Expenditure by PMGSY Scheme",
+    x = "Political Scheme",
+    y = "Expenditure (Lakhs)"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+The box plot compares project expenditures under various PMGSY schemes.
+PMGSY-I shows the highest median expenditure and a wide distribution, with numerous outliers, indicating both moderate and high-value projects were undertaken.
+RCPLWEA and PMGSY-III reflect moderate median spending with some variability, suggesting a mix of consistent and regionally scaled investments.
+PMGSY-II shows relatively lower and more consistent expenditures with fewer high-value outliers.
+In contrast, PM-JANMAN exhibits minimal to no recorded spending, possibly due to limited implementation or data availability.
+\newpage
+
+# Chapter 4: Modeling and Evaluation
+
+
+##  Model Setup and Splitting
+```{r setup7, warning=FALSE ,message=FALSE}
+library(rsample)
+
+data=df1 
+head(data$EXPENDITURE_OCCURED_LAKHS)
+
+splite =  initial_split(data ,prop = 0.7 ,
+                        strata = "EXPENDITURE_OCCURED_LAKHS")
+train =  training(splite)
+test  =  testing(splite)
+
+```
+
+## Linear Model and Overfitting
+```{r ,warning=FALSE,message=FALSE}
+model = lm(EXPENDITURE_OCCURED_LAKHS ~ . , data = train)
+broom::tidy(model)
+
+train_pred= predict(model ,data =train)
+test_pred = predict(model ,data =test)
+RMSE_train = sqrt(mean
+                  (
+  (
+    train$EXPENDITURE_OCCURED_LAKHS - train_pred)^2
+                    )
+  )
+RMSE_test = sqrt(mean(
+  (
+    test$EXPENDITURE_OCCURED_LAKHS - test_pred)^2
+  )
+  )
+
+RMSE_train
+RMSE_test
+
+```
+
+
+\large My data showed signs of overfitting when using a linear model (lm).
+\large To reduce overfitting and improve generalization on unseen data, 
+\large I applied a regularized regression method (e.g., Lasso or Ridge)
+
+## Variable Transformations
+
+### Box-Cox and Log Transformations
+
+```{r setup8, fig.cap="The log(x + 1) transformation reduces skewness in expenditure data.", fig.width=7, fig.height=4, warning=FALSE, message=FALSE}
+library(dplyr)
+library(tidyverse)
+library(MASS)
+
+# Model matrix (if needed elsewhere)
+X = model.matrix(EXPENDITURE_OCCURED_LAKHS ~ ., data = train)[, -1]
+
+# Define Y
+Y = df1$EXPENDITURE_OCCURED_LAKHS
+
+# Ensure positivity for Box-Cox
+min_val = min(Y, na.rm = TRUE)
+
+if (min_val <= 0) {
+  Y_shifted = Y - min_val + 1
+} else {
+  Y_shifted = Y
+}
+
+# Box-Cox transformation
+boxcox_out = boxcox(
+  lm(Y_shifted ~ 1),
+  lambda = seq(-2, 2, 0.1),
+  xlab = expression(lambda),
+  ylab = "Log-Likelihood",
+  main = "Box-Cox Log-Likelihood Plot"
+)
+
+# Find best lambda
+lambda_best = boxcox_out$x[which.max(boxcox_out$y)]
+cat("Optimal lambda:", lambda_best, "\n")
+
+#Apply log(x+1) transformation
+Y = log(train$EXPENDITURE_OCCURED_LAKHS+1 )
+par(mfrow = c(1, 2))
+hist(train$EXPENDITURE_OCCURED_LAKHS,
+     main = "Original", 
+     xlab = "Expenditure (Lakhs)")
+hist(Y, main = "Log-transformed", 
+     xlab = "log(Expenditure + 1)")
+
+sum(is.na(X))
+sum(is.na(Y))
+```
+The Box-Cox transformation was applied to the expenditure variable to assess the optimal transformation for normality. The log-likelihood curve peaked at $\lambda \approx 0$, indicating that a logarithmic transformation is most suitable. This confirms that applying log(x + 1) is a reasonable choice for reducing skewness.
+
+
+###  Histograms of Log-Transformed Variables
+
+```{r log-transform-histograms, fig.cap = "Histograms of original and log-transformed continuous variables. The log(x+1) transformation helps reduce skewness and makes the variables more suitable for modeling.", fig.width=7, fig.height=6, warning=FALSE, message=FALSE}
+
+# Other Continuous variables   
+vars  = c("COST_OF_WORKS_SANCTIONED_LAKHS",
+          "LENGTH_OF_ROAD_WORK_COMPLETED_KM",
+          "LENGTH_OF_ROAD_WORK_SANCTIONED_KM",
+          "STATE_GDP_CRORE")
+
+# Define labels
+labels  = c("Sanctioned Cost",
+            "Completed Length",
+            "Sanctioned Length",
+            "State GDP")
+
+par(mfrow = c(2, 4), mar = c(4, 4, 2.5, 1),
+    cex.main = 0.9, 
+    cex.lab = 0.9)
+
+for (i in seq_along(vars)) {
+  v = vars[i]
+  label = labels[i]
+  
+  original = df1[[v]]
+  log_trans = log(original + 1)
+  
+  # Original histogram
+  hist(original,
+       main = paste("Original:", label),
+       col = "skyblue",
+       xlab = label)
+  
+  # Log-transformed histogram
+  hist(log_trans,
+       main = paste("Log-Transformed:", label),
+       col = "orange",
+       xlab = paste("log(1 +", label, ")"))
+}
+```
+### Box-Cox Plots for Multiple Variables
+
+```{r boxcox_multiple_vars,fig.cap = "Box-Cox plots for four continuous variables. Variables like Sanctioned Cost, Completed Length, and Sanctioned Length have optimal lambda ≈ 0 (suggesting log transformation), while State GDP shows λ ≈ 0.5 (square-root transformation preferred).",fig.width = 8, fig.height = 6, warning = FALSE, message = FALSE}
+
+library(MASS)
+
+vars = c("COST_OF_WORKS_SANCTIONED_LAKHS",
+          "LENGTH_OF_ROAD_WORK_COMPLETED_KM",
+          "LENGTH_OF_ROAD_WORK_SANCTIONED_KM",
+          "STATE_GDP_CRORE")
+
+labels = c("Sanctioned Cost (Lakhs)",
+            "Completed Length (KM)",
+            "Sanctioned Length (KM)",
+            "State GDP (Crore)")
+
+par(mfrow = c(2, 2), mar = c(4, 4, 3, 1))
+
+# Loop through each variable and create Box-Cox plot
+for (i in seq_along(vars)) {
+  var_name = vars[i]
+  label = labels[i]
+  
+  y = df1[[var_name]]
+  
+  # Ensure all values are positive for Box-Cox
+  if (min(y, na.rm = TRUE) <= 0) {
+    y = y - min(y, na.rm = TRUE) + 1
+  }
+  
+  boxcox(lm(y ~ 1),
+         main = paste("Box-Cox for", label),
+         xlab = expression(lambda),
+         ylab = "Log-Likelihood")
+}
+
+
+```
+A Box-Cox transformation was applied to assess the optimal transformation for key continuous variables. The variables **Sanctioned Cost**, **Completed Length**, and **Sanctioned Length** all exhibited an optimal lambda ($\lambda$) close to 0, supporting the use of a log transformation of the form $\log(x + 1)$. 
+
+The variable **State GDP** showed a lambda around 0.5–0.7, suggesting that a square root transformation (i.e., $x^{0.5}$) or a general Box-Cox transformation would be more appropriate than a simple log.
+
+These transformations were applied to reduce skewness and approximate normality, which helps improve the performance of model regularization techniques such as **Lasso regression**.
+
+
+### Handling Missing Values After Transformation
+```{r,warning=FALSE,message=FALSE}
+Y = log(train$EXPENDITURE_OCCURED_LAKHS+1 )
+sum(is.na(Y))
+ # Create a logical index of non-missing rows in Y
+complete_idx = complete.cases(Y)
+# Keep only the rows in X where Y is not missing
+X = X[complete_idx, ]
+# Keep only the non-missing values in Y
+Y = Y[complete_idx]               
+sum(is.na(Y))
+```
+**Handling Missing Values from Log Transformation**
+
+- While applying the log transformation to the `EXPENDITURE_OCCURED_LAKHS` variable using `log(x + 1)`, we observed that 4 values became `NA`. This is likely due to pre-existing missing or zero values in the original expenditure column.
+
+- To ensure clean inputs to the LASSO model, we used `complete.cases()` to filter out rows where either the predictors or the response were missing. This step is critical when working with `glmnet`, which does not handle `NA` values.
+
+- After this filtering, the dataset used for modeling was free of missing values and ready for regularization-based training.
+
+
+- Both log and Box-Cox transformations were applied to address skewness in continuous variables.Missing values were removed to ensure a complete data set. Categorical predictors were encoded using the **model.matrix()** function, facilitating compatibility with regularization techniques. The final model was fitted using Lasso regression, which performs both variable selection and regularization.
+
+
+## Regularization Models
+### Ridge Regression
+
+
+```{r setup9, eval=FALSE, warning=FALSE, message=FALSE} 
+library(glmnet)
+
+# Apply ridge regression 
+ridge = glmnet(x= X ,
+               y= Y ,
+               alpha = 0)
+plot(ridge ,xvar = "lambda")
+
+
+#Lambda applies to penality parameter
+ridge$lambda %>% head()
+
+#Small Lambda results  in large coef
+coef(ridge)[c("NO_OF_BRIDGES_SANCTIONED",
+              "LENGTH_OF_ROAD_WORK_COMPLETED_KM"),
+            100]
+
+#Large Lambda results in small coef
+coef(ridge)[c("NO_OF_BRIDGES_SANCTIONED",
+              "LENGTH_OF_ROAD_WORK_COMPLETED_KM"),
+            1]
+```
+
+
+**Find optimal lambda value using k fold croos validation**
+```{r ridge_cv,eval=FALSE,warning=FALSE,message=FALSE}
+#Apply CV ridge regression
+ridge = cv.glmnet(x = X ,y = Y ,alpha=0)
+plot(ridge ,main = "Ridge Penalty\n\n")
+```
+plot results:
+Ridge regression does not force any variables to exactly zero so-all features will remain in the model but we see the number of variables retained in the lasso model decrease as the penalty increases.
+
+### Lasso Regression
+```{r lasso_cv_plot, warning=FALSE, message=FALSE, fig.cap="Lasso Regression: Cross-validated Mean Squared Error (MSE) across different lambda values. The first vertical line indicates the lambda with minimum MSE, and the second shows 1-SE rule."}
+
+library(glmnet)
+lasso = cv.glmnet(
+  x = X,
+  y = Y,
+  alpha = 1
+)
+
+# Plot CV error vs log(lambda)
+plot(lasso, main = "Lasso penalty\n\n)")
+```
+
+- 10-fold CV MSE for a ridge and lasso model.
+- First dotted vertical line in each plot represents the lambda with the samllest MSE and the second represents the lambda with an MSE
+with in one standard error of the minimum MSE
+```{r ridge_summary,eval=FALSE,warning=FALSE,message=FALSE}
+summary(ridge)
+```
+### Comparing Ridge and Lasso (Plot and MSE)
+
+```{r ridge_model,eval=FALSE,warning=FALSE,message=FALSE}
+#ridge model
+min(ridge$cvm) #minimum MSE
+ridge$lambda.min #lambda for this min MSE
+ridge$cvm [ridge$lambda == ridge$lambda.1se] #1-SE rule
+ridge$lambda.1se #lambda for this MSE
+```
+- The minimum MSE for our ridge model is 1.110118(produced when lambda = 0.1028479)
+```{r ,warning=FALSE,message=FALSE}
+#Lasso model
+min(lasso$cvm) #
+lasso $lambda.min
+lasso $ cvm[lasso$lambda == lasso$lambda.1se]
+lasso$lambda.1se
+```
+
+- Whereas the minimum MSE for our lasso model is 0.6642386(produced when lambda = 0.01563196)
+```{r ridge_abline,eval=FALSE,warning=FALSE,message=FALSE}
+#Ridge model
+ridge_min = glmnet(
+  x = X ,
+  y = Y ,
+  alpha = 0
+)
+
+par(mfrow = c(1,2))
+plot(ridge_min ,xvar = "lambda" ,main = "Ridge penalty\n\n")
+abline(v=log(ridge$lambda.min) ,col = "red"  ,lty ="dashed")
+abline(v=log(ridge$lambda.1se) ,col = "blue" ,lty ="dashed")
+```
+
+```{r lasso_lambda_path, warning=FALSE, message=FALSE, fig.cap="Lasso Model: Coefficient shrinkage path across lambda values. Red dashed line = lambda.min (minimum CV error), Blue dashed line = lambda.1se (simpler model with comparable error)."}
+
+#Lasso model
+lasso_min = glmnet(
+  x = X ,
+  y = Y ,
+  alpha = 1
+)
+plot(lasso_min ,xvar = "lambda" ,main ="Lasso penalty\n\n")
+abline(v = log(lasso$lambda.min),col ="red" ,lty  ="dashed")
+abline(v = log(lasso$lambda.1se ),col= "blue",lty= "dashed")
+```
+The dashed red line represent largest lambda value that falls with in one standard error of the minimum MSE Coefficient for our ridge and lasso models. first dotted vertical
+line in each plot represents the lambda with the smallest MSE and the second represent the lambda with an MSE with one standard error of the minimum MSE
+
+### Elastic Net Regression (alpha = 0.25 and 0.75)
+
+```{r  elastic_net,eval=FALSE,warning=FALSE,message=FALSE}
+#ELASTIC NET MODEL
+elastic_net = glmnet(x = X , y = Y ,alpha = .25)
+elastic_net =glmnet(x =X, y =Y ,alpha = 0.75)
+
+# Set up 2x2 plot layout
+par(mfrow = c(2, 2))
+
+#  Plot Lasso with cross-validation (cv.glmnet object)
+plot(lasso_min, xvar = "lambda",
+     main = "Lasso (alpha = 1)\n\n")
+
+#  Elastic Net with alpha = 0.25 (glmnet object)
+Elastic_Net_min_25 = glmnet(x = X, y = Y, alpha = 0.25)
+plot(Elastic_Net_min_25, xvar = "lambda", 
+     main = "Elastic Net (alpha = 0.25)\n\n")
+
+# Elastic Net with alpha = 0.75 (glmnet object)
+Elastic_Net_min_75 = glmnet(x = X, y = Y, alpha = 0.75)
+plot(Elastic_Net_min_75, xvar = "lambda",
+     main = "Elastic Net (alpha = 0.75)\n\n")
+
+# Ridge with cross-validation (cv.glmnet object)
+plot(ridge_min, xvar = "lambda", 
+     main = "Ridge (alpha = 0)\n\n")
+```
+
+
+However ,we can implement an elastic net the same way as ridge and lasso models by adusting the alpha parameter Any alpha Value between 0-1 will perform the elastic net When alpha= 0.5we perform an equal combination of penalties whereas **alpha<0.5** will have a heavier **ridge penalty** applied and **alpha >0.5**
+will  have a heavier **lasso penalty**
+
+### Grid Search for Best Alpha and Lambda (Regularized Model)
+
+The model that minimized **RMSE** used an  
+$\boldsymbol{\alpha} = 1$ and $\boldsymbol{\lambda} =0.01355057$.  
+The minimum RMSE was **0.7888579**,  
+which corresponds to MSE = $0.7888579^2 = 0.62229$,  
+in line with the full **Lasso** model produced earlier.
+
+The following plot shows how changing **alpha** (x-axis) and **lambda** (line color) affects RMSE.
+
+```{r glmnet_grid_search_plot, warning=FALSE, message=FALSE, fig.cap = "10-fold cross-validation results for glmnet: RMSE values across different alpha values (x-axis) and lambda values (line color). The optimal combination minimizes RMSE."}
+
+set.seed(123)
+cv_glmnet = train(
+  x = X,
+  y = Y,
+  method = "glmnet",
+  trControl = trainControl(method = "cv", number = 10),
+  preProcess = c("zv", "center", "scale"),
+  tuneLength = 10
+)
+cv_glmnet
+# Best alpha/lambda combo
+cv_glmnet$bestTune
+
+# RMSE Plot
+library(ggplot2)
+ggplot(cv_glmnet)
+
+```
+**The 10-fold cross validation RMSE across 10 alpha values(x-axis) and 10 lambda values(line color).**
+
+- Fewer **lambda** are explored, but relationship between **alpha** and **RMSE** is clearly visible.
+
+-  $α = 1$ (pure Lasso) gives the best RMSE.
+
+-  This suggests **Lasso** is better suited for this PMGSY data set rather than **Ridge** or **Elastic Net**.
+
+### Regularized model(Lasso) RMSE and Variable Importance
+
+- we predict *EXPENDITURE_OCCURED_LAKHS*  Y using features X 
+- Y is  skewed(i.e EXPENDITURE_OCCURED_LAKHS are not normally distributed)
+- Linear model work best when the response is normal and linear
+- Y = log(Y+1) this log price tends to be more normally distributed
+- The relation between predictors and log(EXPENDITURE_OCCURED_LAKHS+1) is often more linear
+
+> Note: The regularized model was trained on log-transformed expenditure values log(Y + 1).
+
+> To interpret predictions and compute RMSE in the original lakhs scale, both the predicted and actual values are back-transformed using `exp(...) - 1`.
+
+
+
+```{r ,warning=FALSE,message=FALSE}
+
+# Predict on training data (log scale)
+pred_lakh = predict(cv_glmnet, train = X)
+
+Y_actual = exp(Y) - 1
+predicted_lakh = exp(pred_lakh) - 1
+
+# RMSE for regularized model
+reg_rmse = RMSE(predicted_lakh, Y_actual)
+reg_rmse
+
+```
+
+```{r reg_model_vip_plot, warning=FALSE, message=FALSE, fig.cap = "Top 20 most important variables from the regularized model (Lasso/Ridge). Importance is based on coefficient size after regularization."}
+
+# Variable importance for regularized model
+vip(cv_glmnet, num_features = 10, bar = TRUE)
+
+```
+
+**Top 20 most important predictors for the regularized model are shown above.**  
+
+These variables had the highest influence on predicting expenditure after applying regularization.  
+Variables with zero or near-zero coefficients were automatically eliminated by the Lasso penalty.
+
+
+### PLS Regression (Fitting) 
+
+To compare against the **regularized model**, we also fit a **PLS (Partial Least Squares)** model.
+
+```{r pls_cv_plot, warning=FALSE, message=FALSE,fig.cap = "PLS Model: 10-fold cross-validation RMSE across number of latent components. The optimal number of components is selected based on minimum RMSE."}
+
+
+library(pls)
+library(caret)
+
+# Add log-transformed response
+train$log_expenditure = log(train$EXPENDITURE_OCCURED_LAKHS + 1)
+
+# Clean incomplete values
+complete_idx = complete.cases(train$log_expenditure)
+Y_clean = train$log_expenditure[complete_idx]
+
+# Combine into training data
+train_clean = cbind(X, log_expenditure = Y_clean)
+train_clean = as.data.frame(train_clean)  # Make sure it's a data.frame
+
+# Train the PLS model
+set.seed(123)
+cv_pls_log = train(
+  log_expenditure ~ .,
+  data = train_clean,
+  method = "pls",
+  trControl = trainControl(method = "cv", number = 10),
+  preProcess = c("zv", "center", "scale"),
+  tuneLength = 20
+)
+
+# Output model summary
+cv_pls_log
+cv_pls_log$bestTune
+ggplot(cv_pls_log)
+
+
+
+```
+
+### VIP Plot (PLS Visual)
+```{r pls_variable_importance, warning=FALSE, message=FALSE, fig.cap = "Top 20 most important predictors from the PLS model based on model-based variable importance."}
+
+
+
+#Variable Importance for PLS
+library(vip)
+vip(cv_pls_log,
+    num_features = 10,
+    method = "model")
+
+
+```
+The above plot uses model-based variable importance from the trained PLS model.  
+The features with the highest importance scores contribute the most to explaining variation in the response variable.
+
+```{r ,warning=FALSE,message=FALSE}
+# RMSE on log scale (log-transformed response)
+
+pls_log_rmse = min(cv_pls_log$results$RMSE)
+pls_log_rmse
+
+
+
+```
+
+```{r ,warning=FALSE,message=FALSE}
+# Predict on validation data or train data 
+log_preds = predict(cv_pls_log, newdata = train_clean)
+
+# Back-transform
+pred_expenditure = exp(log_preds) - 1
+actual_expenditure = exp(train_clean$log_expenditure) - 1
+
+# Calculate RMSE on the original scale (lakhs)
+pls_rmse_lakhs = sqrt(mean((pred_expenditure - actual_expenditure)^2))
+pls_rmse_lakhs
+
+
+```
+
+> **Note:**
+> The minimum RMSE from the PLS model was selected based on 10-fold cross-validation across 20 components.
+Since the model was trained on the original scale of expenditures (in lakhs), the RMSE is also in lakhs.
+
+### Variable Comparison: Lasso vs PLS 
+
+**Varible of LASOO**:
+
+There are 5 variables that clearly stand out as most important based on their relative bar lengths (higher importance scores), and they are
+
+- **PMGSY_SCHEMEPMGSY-I**
+- **COST_OF_WORKS_SANCTIONED_LAKHS**
+- **NO_OF_ROAD_WORK_SANCTIONED**
+
+- **NO_OF_ROAD_WORKS_COMPLETED**
+
+- **LENGTH_OF_ROAD_WORK_COMPLETED_KM**
+
+These bars are significantly longer than the rest  meaning they are important predictors in your **LASSO** model.
+
+
+**Variable of PLS**:
+
+There are 6 variables that clearly stand out as most important based on their relative bar lengths (higher importance scores), and they are:
+
+- **PMGSY_SCHEMEPMGSY-I**
+
+- **PMGSY_SCHEMEPMGSY-III**
+
+- **PMGSY_SCHEMEPMGSY-II**
+
+- **COST_OF_WORKS_SANCTIONED_LAKHS**
+
+- **PMGSY_SCHEMERCPWEA**
+
+- **STATE_NAMEGOA**
+
+These bars are significantly longer than the rest  meaning they are important predictors in your **PLS** model.
+
+
+
+
+### Model Comparison: Lasso vs PLS
+
+**Why PLS Was Used ?**
+
+The **Partial Least Squares (PLS)** method was selected after evaluating both the **characteristics** of the PMGSY dataset and the **performance of alternative models**. The response variable, `EXPENDITURE_OCCURED_LAKHS`, exhibited significant skewness, and was therefore log-transformed to stabilize variance and improve model fit.
+
+Initial modeling with regularized regression (Lasso) on the log-transformed response achieved an RMSE of approximately **591.8683 lakhs**, even after hyperparameter tuning. In contrast, the PLS model, also trained on the log-transformed response, achieved a much lower RMSE of **327.7265 lakhs**.
+
+**Reasons for Choosing PLS:**
+
+- **Correlated Predictors:** The PMGSY dataset contains several interrelated numeric predictors (e.g., road length, sanctioned cost, GDP). PLS is effective in handling multicollinearity.
+- **Latent Factor Extraction:** PLS constructs components that are linear combinations of predictors, optimized to explain variance in the response.
+- **Superior Performance:** Compared to Lasso, PLS achieved a considerably lower RMSE, demonstrating better generalization.
+- **Cross-Validation:** Component tuning was done using cross-validation, reducing the risk of overfitting or underfitting.
+
+> **Conclusion**: Based on the above evidence, the PLS model was well-suited for the PMGSY data. It provided a balance between dimensionality reduction and predictive accuracy, making it a more effective choice than regularized linear models in this case.
+
+
+
+### Model Comparison Summary
+
+**How does the PLS model compare to other models fitted on the PMGSY dataset?**  
+To enable a fair comparison, all models were trained on a log-transformed version of the response variable (`log(EXPENDITURE_OCCURED_LAKHS + 1)`), and predictions were **back-transformed** to the original lakhs scale for RMSE calculation.
+
+The regularized regression model (Lasso) produced an RMSE of approximately **591.86 lakhs**. The PLS model, however, reduced this error significantly, yielding an RMSE of **327.72 lakhs**. This performance gap illustrates the advantage of using dimension-reduction techniques like PLS, especially when predictor variables are correlated.
+
+| Model              | RMSE (Lakhs) |
+| ------------------ | ------------ |
+| Lasso Regression   | ₹591.86      |
+| **PLS Regression** | **₹327.72**  |
+
+
+> This suggests that for the PMGSY dataset—characterized by skewed expenditure data and correlated predictors—**PLS regression not only improved prediction accuracy but also avoided over fitting**. Therefore, PLS emerged as the most appropriate model for this analysis.
+
+
+
+### Key Insights and Objective Summary
+
+**Objective**:
+
+To develop a predictive model that estimates the actual **expenditure incurred (`EXPENDITURE_OCCURED_LAKHS`)** for each road project under the PMGSY scheme using project-level attributes such as :
+- **Political party**
+- **sanctioned cost**
+- **road length**
+- **state-level indicators like GDP**.
+
+####  Why Predict Expenditure?
+
+The purpose of predicting expenditure isn't to be 100% accurate — that’s rarely possible in real-world data. Instead, the goal is to:
+
+- Get an idea of **which projects or states are spending more or less** than expected
+
+- Understand **what factors are influencing the costs** (like road length, cost, or state GDP)
+
+- Spot areas **where money might not be used properly** (under-spending or over-spending)
+
+- Help make better decisions in the future by giving **policymakers a data-backed tool**
+
+**Insights Derived from PMGSY Data**:
+
+1. **Expenditure was highly right-skewed**, indicating a few projects had extremely large costs. Log transformation helped normalize the response variable.
+2. **Sanctioned Cost** and **Completed Road Length** were the most important predictors driving expenditure.
+3. **State GDP** captured regional economic context — richer states tended to spend more per project.
+4. **Political and regional variables** contributed heterogeneity — expenditure patterns varied by party and geography.
+5. **Missing and zero values in expenditure** were cleaned to ensure proper model training. Some rows were dropped or adjusted.
+6. **Multicollinearity** was prominent; variables like sanctioned and completed lengths were strongly correlated. PLS managed this well by extracting latent features.
+7. **PLS model residuals were fairly homoscedastic**, with consistent error across large and small projects.
+8. **Lasso shrunk many variables to zero**, potentially ignoring moderate but relevant predictors — PLS preserved more predictive information.
+\newpage
+
+# Chapter 5:Conclusion
+
+In this study, the central objective was to model and interpret the `EXPENDITURE_OCCURED_LAKHS` of road projects under the PMGSY scheme. The response variable was significantly skewed, prompting a log transformation to better meet modeling assumptions.
+
+Several models were evaluated, including regularized regression (Lasso) and dimension-reduction techniques (PLS). The Lasso model, despite tuning, produced a high RMSE of ₹591.86 lakhs. In contrast, the PLS model achieved a substantially lower RMSE of ₹327.72 lakhs.
+
+This reduction in error can be attributed to PLS's ability to extract latent components that capture the underlying structure in the data, especially in the presence of **multicollinearity**. Although PLS is not a perfect model, its performance, interpretability, and balance between **complexity and accuracy** make it a strong candidate for modeling expenditure in infrastructure datasets like PMGSY.
+
+> Thus, while the average error (~₹3.27 crores) may seem large, it reflects project-level variance and scale. The model still captures essential expenditure trends and relationships, making it highly valuable for strategic planning, anomaly detection, and budgeting.
+
+## **Conclusion**:
+
+PLS regression is not only statistically sound but practically meaningful for the PMGSY dataset. It outperformed Lasso, avoided overfitting, and revealed important drivers of project expenditure.
+
+> **Additional Interpretation**: In real-world deployment, such models can help identify cost anomalies (e.g., unusually high or low spending), prioritize audits, and inform policy changes. While the average prediction error (₹327 lakh) is non-trivial, it is acceptable given the project scale, and it highlights useful expenditure dynamics across the PMGSY landscape.
+
+> This makes **PLS a suitable and recommended modeling technique** for similar public-sector infrastructure datasets.
+
+
+### Final Notes on Modeling:
+
+- Data required **log(x + 1)** and **Box-Cox transformations** to correct skewness.
+- Initial **linear regression was overfitting**, so **Lasso** was introduced for regularization.
+- **Best Lasso model**: `alpha = 1`, `lambda ≈ 0.01355057`, RMSE ≈ **591.86 lakhs**
+- **PLS model** (after log transformation and tuning): RMSE ≈ **327.72 lakhs**
+- Important predictors:
+  - `COST_OF_WORKS_SANCTIONED_LAKHS`
+  - `LENGTH_OF_ROAD_WORK_COMPLETED_KM`
+  - `STATE_GDP_CRORE`
+  - Scheme type (`PMGSY-I`)
+
+
+
+### Final Insight:
+
+Overall, the analysis indicates that expenditure under PMGSY projects is primarily driven by **road length**, **sanctioned project cost**, and the **broader economic** and **political** context of each state.
+
+
+\newpage
+
+
+# The following table lists key R packages used for modeling and visualization in the project.
+
+```{r warning=FALSE,message=FALSE}
+library(knitr)
+library(kableExtra)
+library(tibble)
+library(dplyr)
+
+# Escape helper functions
+safe_bullet = function(x) {
+  if (knitr::is_latex_output()) {
+    gsub("•", "\\\\textbullet{}", x)
+  } else {
+    x
+  }
+}
+
+escape_latex = function(x) {
+  if (knitr::is_latex_output()) {
+    x = gsub("_", "\\\\_", x)
+    x = gsub("&", "\\\\&", x)
+    x = gsub("#", "\\\\#", x)
+  }
+  x
+}
+
+# Create the table
+package_tbl = tribble(
+  ~`Package Name`, ~`Functions Used`,
+  ~References, ~Link, ~Utility,
+
+  "caret", "`train`, `trainControl`, `createDataPartition`", 
+  "Kuhn (2008), Kuhn (2013)", 
+  "[Link](https://www.jstatsoft.org/article/view/v028i05)", 
+  "• Unified interface; • Built-in preprocessing",
+
+  "ggplot2", "`ggplot`, `geom_point`, `geom_col`, `geom_sf`,
+  etc.", 
+  "Wickham (2016), Chang (2012)", 
+  "[Link](https://ggplot2.tidyverse.org/)", 
+  "• Grammar of graphics; • Customizable visualizations",
+  
+  "knitr", "`kable`, `is_latex_output`, `opts_chunk`", 
+  "Xie (2013, 2015)", 
+  "[Link](https://yihui.org/knitr/)", 
+  "• Dynamic report generation; • R Markdown/Quarto support",
+
+
+  "kableExtra", "`kable_styling`, `add_header_above`, etc.", 
+  "Zhu (2019)", 
+  "[Link](https://haozhu233.github.io/kableExtra/)", 
+  "• Advanced table formatting; • LaTeX and HTML styling",
+  
+  
+
+
+  "tibble", "`tribble`, `tibble`, `as_tibble`", 
+  "Müller & Wickham (2017)", 
+  "[Link](https://tibble.tidyverse.org/)", 
+  "• Modern reimagining of data frames; • Pretty printing",
+  
+  
+  
+    "dplyr", "`filter`, `mutate`, `group_by`, `summarise`, etc.", 
+  "Wickham et al. (2015), Grolemund & Wickham (2016)", 
+  "[Link](https://dplyr.tidyverse.org/)", 
+  "• Tidy data manipulation; • Optimized performance",
+  
+  "glmnet", "`glmnet`, `cv.glmnet`", 
+  "Friedman et al. (2010), Tibshirani (1996)", 
+  "[Link](https://cran.r-project.org/web/packages/glmnet/index.html)", 
+  "• Lasso/Ridge regression; • Cross-validation support",
+
+  
+    "readr", "`read_csv`", 
+  "Wickham & Hester (2017), Wickham (2014)", 
+  "[Link](https://readr.tidyverse.org/)", 
+  "• Fast CSV import; • Auto-parsing columns",
+
+  
+    "sf", "`st_read`, `st_transform`, `st_join`, etc.", 
+  "Pebesma (2018), Bivand et al. (2018)", 
+  "[Link](https://r-spatial.github.io/sf/)", 
+  "• Spatial data handling; • ggplot2 compatible",
+
+  
+    "MASS", "`boxcox`", 
+  "Venables & Ripley (2002)", 
+  "[Link](https://cran.r-project.org/package=MASS)", 
+  "• Box-Cox transformation; • Classic stats functions",
+  
+  
+    "ggrepel", "`geom_text_repel`, `geom_label_repel`", 
+  "Slowikowski (2019)", 
+  "[Link](https://cran.r-project.org/web/packages/ggrepel/index.html)", 
+  "• Prevent overlapping labels; • Improves readability",
+  
+  
+  "gridExtra", "`grid.arrange`, `marrangeGrob`", 
+  "Gu et al. (2014)", 
+  "[Link](https://cran.r-project.org/web/packages/gridExtra/index.html)", 
+  "• Arrange multiple plots; • Layout control",
+  
+  
+    "vioplot", "`vioplot`", 
+  "Adelman & Phillips (2012)", 
+  "[Link](https://cran.r-project.org/web/packages/vioplot/index.html)", 
+  "• Distribution plots; • Group comparison",
+  
+  
+  "vip", "`vip`", 
+  "Greenwell (2020)", 
+  "[Link](https://cran.r-project.org/web/packages/vip/index.html)", 
+  "• Variable importance plots; • Model-agnostic support",
+
+)
+
+# Sanitize columns
+package_tbl = package_tbl %>%
+  mutate(across(everything(), escape_latex)) %>%
+  mutate(Utility = safe_bullet(Utility))
+
+# Detect output format and render appropriately
+if (knitr::is_latex_output()) {
+  kable(package_tbl, format = "latex", 
+        booktabs = TRUE, 
+        escape = FALSE,
+        caption = "Summary of R Packages 
+        Used for Modeling and Visualization") %>%
+    kable_styling(latex_options = c("hold_position",
+                                    "scale_down"),
+                  full_width = FALSE)
+} else {
+  kable(package_tbl, format = "html", escape = FALSE,
+        caption = "Summary of R Packages Used for
+        Modeling and Visualization") %>%
+    kable_styling(bootstrap_options = c("striped", 
+                                        "hover",
+                                        "condensed",
+                                        "responsive"),
+                  full_width = FALSE)
+}
+```
+ 
+\newpage 
+
+# References
+
+
+
+- 📘 **Boehmke, B. C., & Greenwell, B. M.** (2019). **Hands-On Machine Learning with R**. Chapman & Hall/CRC. [https://doi.org/10.1201/9780367816377](https://doi.org/10.1201/9780367816377)
+
+- 📘 **James, G., Witten, D., Hastie, T., & Tibshirani, R.** (2013). **An Introduction to Statistical Learning: With Applications in R**. Springer.
+
+- 📘 **Hastie, T., Tibshirani, R., & Friedman, J. H.** (2009). **The Elements of Statistical Learning: Data Mining, Inference, and Prediction** (2nd ed.). Springer.
+
